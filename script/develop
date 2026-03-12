@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Start Home Assistant with kampklar custom component for local development
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+CONFIG_DIR="config"
+
+# Create minimal HA config if it doesn't exist
+if [ ! -f "$CONFIG_DIR/configuration.yaml" ]; then
+  mkdir -p "$CONFIG_DIR"
+  cat > "$CONFIG_DIR/configuration.yaml" << 'EOF'
+default_config:
+
+logger:
+  default: info
+  logs:
+    custom_components.kampklar: debug
+EOF
+  echo "Created $CONFIG_DIR/configuration.yaml"
+fi
+
+# Symlink custom_components into config dir
+mkdir -p "$CONFIG_DIR/custom_components"
+if [ ! -L "$CONFIG_DIR/custom_components/kampklar" ]; then
+  ln -sf "$(pwd)/custom_components/kampklar" "$CONFIG_DIR/custom_components/kampklar"
+  echo "Symlinked custom_components/kampklar into config"
+fi
+
+echo "Starting Home Assistant on http://localhost:8123"
+hass -c "$CONFIG_DIR"
