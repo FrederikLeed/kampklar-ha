@@ -91,6 +91,10 @@ Copy `custom_components/kampklar/` to your `config/custom_components/` directory
 
 See the [project board](https://github.com/users/FrederikLeed/projects/1) for full status.
 
+## Development
+
+This project uses [Claude Code](https://claude.ai/claude-code) for AI-assisted development. Project context and rules are stored in `.claude/memory/` — see [docs/claude-code-memory.md](docs/claude-code-memory.md) for details on how this works and how contributors can manage it.
+
 ## License
 
 MIT
