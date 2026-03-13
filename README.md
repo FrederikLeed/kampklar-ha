@@ -1,5 +1,7 @@
 # KampKlar for Home Assistant
 
+<img src="custom_components/kampklar/brand/icon.svg" alt="KampKlar" width="120" align="right">
+
 [![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Test](https://github.com/FrederikLeed/kampklar-ha/actions/workflows/test.yml/badge.svg)](https://github.com/FrederikLeed/kampklar-ha/actions/workflows/test.yml)
