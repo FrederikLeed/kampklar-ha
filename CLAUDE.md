@@ -39,4 +39,4 @@ Home Assistant custom integration for DBU KampKlar. Reverse-engineered API from 
 
 ## GitHub
 - Project board: https://github.com/users/FrederikLeed/projects/1
-- 41 issues across 8 milestones
+- 5 milestones: Setup (done), Research, Phase 1: Read, Phase 2: Write, Release
