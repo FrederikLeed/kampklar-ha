@@ -6,9 +6,10 @@
 |-----------|-------|--------|
 | 0 - Project Setup | CI/CD, devcontainer | ✅ Complete |
 | 1 - Research | mitmproxy, cert pinning, iCal, DBU contact | Parallel track |
-| **2 - Phase 1: Read** | Sensors, calendar, options, error handling, docs, dashboards | In progress |
-| **3 - Phase 2: Write** | Signup endpoints, service calls, related tests | Blocked by Phase 1 |
-| 4 - Release | HACS prep, v0.1.0, HACS submission | After Phase 1 |
+| **2 - MVP Release** | Reauth flow, HACS docs, HACS prep, v0.1.0 tag | In progress |
+| **3 - Phase 1: Read** | Sensors, calendar, options, error handling, docs, dashboards | After MVP |
+| **4 - Phase 2: Write** | Signup endpoints, service calls, related tests | After Phase 1 |
+| 5 - Post-MVP | HACS default repo submission | After validation |
 
 ## Dependency tree
 
