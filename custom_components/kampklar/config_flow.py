@@ -103,18 +103,14 @@ class KampKlarConfigFlow(ConfigFlow, domain=DOMAIN):
         self._user_input = {CONF_USERNAME: entry_data[CONF_USERNAME]}
         return await self.async_step_reauth_confirm()
 
-    async def async_step_reauth_confirm(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_reauth_confirm(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle reauth credential input."""
         errors: dict[str, str] = {}
         if user_input is not None:
             session = async_get_clientsession(self.hass)
             client = KampKlarApiClient(session)
             try:
-                user = await client.authenticate(
-                    self._user_input[CONF_USERNAME], user_input[CONF_PASSWORD]
-                )
+                user = await client.authenticate(self._user_input[CONF_USERNAME], user_input[CONF_PASSWORD])
             except KampKlarAuthError:
                 errors["base"] = "invalid_auth"
             except KampKlarConnectionError:
