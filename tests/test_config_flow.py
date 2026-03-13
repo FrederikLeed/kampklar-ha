@@ -171,6 +171,42 @@ async def test_user_flow_multi_person(hass: HomeAssistant, mock_user, mock_setup
         assert persons[0][CONF_PERSON_NAME] == "Child One"
 
 
+async def test_persons_schema_serializable(hass: HomeAssistant, mock_user, mock_setup_entry):
+    """Test that the persons step schema can be serialized by voluptuous_serialize.
+
+    HA's frontend requires all form schemas to pass through voluptuous_serialize.convert().
+    A prior bug used [vol.In()] which cannot be serialized, crashing the UI.
+    """
+    import voluptuous_serialize
+
+    multi_activities = [
+        _make_activity(1001, "Child One"),
+        _make_activity(1002, "Child Two"),
+    ]
+    with patch("custom_components.kampklar.config_flow.KampKlarApiClient") as mock_client_cls:
+        client = AsyncMock()
+        client.authenticate.return_value = mock_user
+        client.get_person_activities.return_value = multi_activities
+        mock_client_cls.return_value = client
+
+        result = await hass.config_entries.flow.async_init(DOMAIN, context={"source": config_entries.SOURCE_USER})
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {CONF_USERNAME: "testuser", CONF_PASSWORD: "testpass"},
+        )
+
+        assert result["step_id"] == "persons"
+
+        # This is what HA does internally — must not raise ValueError
+        from homeassistant.helpers.config_validation import custom_serializer
+
+        serialized = voluptuous_serialize.convert(
+            result["data_schema"], custom_serializer=custom_serializer
+        )
+        assert isinstance(serialized, list)
+        assert len(serialized) > 0
+
+
 async def test_reauth_flow_success(hass: HomeAssistant, mock_user, mock_setup_entry):
     """Test reauth flow updates credentials on success."""
     entry = MockConfigEntry(
