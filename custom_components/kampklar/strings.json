@@ -3,7 +3,38 @@
     "step": {
       "user": {
         "title": "KampKlar",
-        "description": "Opsaet KampKlar integration"
+        "description": "Log ind med dine DBU-oplysninger",
+        "data": {
+          "username": "Brugernavn",
+          "password": "Adgangskode"
+        }
+      },
+      "persons": {
+        "title": "Vaelg personer",
+        "description": "Vaelg hvilke personer der skal foelges: {persons}",
+        "data": {
+          "persons": "Personer"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Ugyldigt brugernavn eller adgangskode",
+      "cannot_connect": "Kan ikke oprette forbindelse til KampKlar"
+    },
+    "abort": {
+      "already_configured": "Denne konto er allerede konfigureret"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "next_activity": {
+        "name": "Naeste aktivitet"
+      },
+      "next_match": {
+        "name": "Naeste kamp"
+      },
+      "pending_signups": {
+        "name": "Afventende tilmeldinger"
       }
     }
   }

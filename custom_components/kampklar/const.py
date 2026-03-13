@@ -1,3 +1,22 @@
 """Constants for the KampKlar integration."""
 
 DOMAIN = "kampklar"
+
+CONF_PERSONS = "persons"
+CONF_PERSON_ID = "person_id"
+CONF_PERSON_NAME = "name"
+
+# Activity type IDs
+ACTIVITY_TYPE_TRAINING = 1
+ACTIVITY_TYPE_MATCH = 2
+ACTIVITY_TYPE_TOURNAMENT = 4
+
+# Signup status IDs
+SIGNUP_NOT_RESPONDED = 0
+SIGNUP_SIGNED_OFF = 1
+SIGNUP_SIGNED_UP = 2
+SIGNUP_AVAILABLE = 3
+SIGNUP_SELECTED = 4
+SIGNUP_COACHES = 7
+
+DEFAULT_SCAN_INTERVAL = 300  # seconds

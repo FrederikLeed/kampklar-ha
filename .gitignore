@@ -36,8 +36,9 @@ htmlcov/
 config/
 .HA_VERSION
 
-# mitmproxy captures (may contain sensitive data)
+# mitmproxy captures (contain sensitive personal data)
 docs/captures/
+docs/api-capture/
 
 # Environment
 .env

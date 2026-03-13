@@ -1,0 +1,24 @@
+{
+  "returnValue": 1,
+  "messageText": "OK",
+  "isSuccess": true,
+  "data": {
+    "userId": 100001,
+    "userName": "testuser",
+    "personId": 200001,
+    "firstName": "Test",
+    "lastName": "Ansen",
+    "gender": 0,
+    "dob": "1990-01-01T00:00:00",
+    "address": "Testvej 1",
+    "zip": "9000",
+    "city": "Aalborg",
+    "countryId": 1,
+    "email": "test@example.com",
+    "mobile": "12345678",
+    "imageUrl": "https://file.dbu.dk/images/user//100001.jpg",
+    "refCalendarUrl": "webcal://ical.dbu.dk/ref",
+    "myTeamCalendarUrl": "webcal://ical.dbu.dk/team",
+    "teamActivityCalendarUrl": "webcal://ical.dbu.dk/activity"
+  }
+}
