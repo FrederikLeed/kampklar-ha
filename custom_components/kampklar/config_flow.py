@@ -15,6 +15,7 @@ from .api import KampKlarApiClient, KampKlarAuthError, KampKlarConnectionError
 from .const import CONF_PERSON_ID, CONF_PERSON_NAME, CONF_PERSONS, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
+_LOGGER.warning("KampKlar config_flow module loaded (v0.1.2)")
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
@@ -38,6 +39,8 @@ class KampKlarConfigFlow(ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle the login step."""
+        _LOGGER.debug("async_step_user called, user_input=%s", "present" if user_input else "None")
+        _LOGGER.debug("Schema keys: %s", list(STEP_USER_DATA_SCHEMA.schema.keys()))
         errors: dict[str, str] = {}
         if user_input is not None:
             session = async_get_clientsession(self.hass)
