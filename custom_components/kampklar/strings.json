@@ -15,6 +15,13 @@
         "data": {
           "persons": "Personer"
         }
+      },
+      "reauth_confirm": {
+        "title": "Godkend igen",
+        "description": "Adgangskoden for {username} er udloebet. Indtast ny adgangskode.",
+        "data": {
+          "password": "Adgangskode"
+        }
       }
     },
     "error": {
@@ -22,7 +29,8 @@
       "cannot_connect": "Kan ikke oprette forbindelse til KampKlar"
     },
     "abort": {
-      "already_configured": "Denne konto er allerede konfigureret"
+      "already_configured": "Denne konto er allerede konfigureret",
+      "reauth_successful": "Godkendelse opdateret"
     }
   },
   "entity": {

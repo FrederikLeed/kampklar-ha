@@ -9,6 +9,7 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.kampklar.api import Activity, KampKlarAuthError, KampKlarConnectionError
 from custom_components.kampklar.const import CONF_PERSON_ID, CONF_PERSON_NAME, CONF_PERSONS, DOMAIN
@@ -168,3 +169,66 @@ async def test_user_flow_multi_person(hass: HomeAssistant, mock_user, mock_setup
         assert len(persons) == 1
         assert persons[0][CONF_PERSON_ID] == 1001
         assert persons[0][CONF_PERSON_NAME] == "Child One"
+
+
+async def test_reauth_flow_success(hass: HomeAssistant, mock_user, mock_setup_entry):
+    """Test reauth flow updates credentials on success."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_USERNAME: "testuser",
+            CONF_PASSWORD: "oldpass",
+            "user_id": 100001,
+            CONF_PERSONS: [{CONF_PERSON_ID: 300001, CONF_PERSON_NAME: "Test"}],
+        },
+        unique_id="100001",
+    )
+    entry.add_to_hass(hass)
+
+    result = await entry.start_reauth_flow(hass)
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "reauth_confirm"
+
+    with patch("custom_components.kampklar.config_flow.KampKlarApiClient") as mock_client_cls:
+        client = AsyncMock()
+        client.authenticate.return_value = mock_user
+        mock_client_cls.return_value = client
+
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {CONF_PASSWORD: "newpass"},
+        )
+
+        assert result["type"] is FlowResultType.ABORT
+        assert result["reason"] == "reauth_successful"
+        assert entry.data[CONF_PASSWORD] == "newpass"
+
+
+async def test_reauth_flow_invalid_auth(hass: HomeAssistant, mock_setup_entry):
+    """Test reauth flow shows error on invalid credentials."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_USERNAME: "testuser",
+            CONF_PASSWORD: "oldpass",
+            "user_id": 100001,
+            CONF_PERSONS: [{CONF_PERSON_ID: 300001, CONF_PERSON_NAME: "Test"}],
+        },
+        unique_id="100001",
+    )
+    entry.add_to_hass(hass)
+
+    result = await entry.start_reauth_flow(hass)
+
+    with patch("custom_components.kampklar.config_flow.KampKlarApiClient") as mock_client_cls:
+        client = AsyncMock()
+        client.authenticate.side_effect = KampKlarAuthError("Invalid")
+        mock_client_cls.return_value = client
+
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {CONF_PASSWORD: "wrongpass"},
+        )
+
+        assert result["type"] is FlowResultType.FORM
+        assert result["errors"] == {"base": "invalid_auth"}

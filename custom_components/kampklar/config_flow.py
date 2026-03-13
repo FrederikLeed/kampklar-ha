@@ -98,6 +98,43 @@ class KampKlarConfigFlow(ConfigFlow, domain=DOMAIN):
             description_placeholders={"persons": ", ".join(self._persons.values())},
         )
 
+    async def async_step_reauth(self, entry_data: dict[str, Any]) -> ConfigFlowResult:
+        """Handle reauthentication when credentials expire."""
+        self._user_input = {CONF_USERNAME: entry_data[CONF_USERNAME]}
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle reauth credential input."""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            session = async_get_clientsession(self.hass)
+            client = KampKlarApiClient(session)
+            try:
+                user = await client.authenticate(
+                    self._user_input[CONF_USERNAME], user_input[CONF_PASSWORD]
+                )
+            except KampKlarAuthError:
+                errors["base"] = "invalid_auth"
+            except KampKlarConnectionError:
+                errors["base"] = "cannot_connect"
+            else:
+                await self.async_set_unique_id(str(user.user_id))
+                self._abort_if_unique_id_mismatch()
+                reauth_entry = self._get_reauth_entry()
+                return self.async_update_reload_and_abort(
+                    reauth_entry,
+                    data={**reauth_entry.data, CONF_PASSWORD: user_input[CONF_PASSWORD]},
+                )
+
+        return self.async_show_form(
+            step_id="reauth_confirm",
+            data_schema=vol.Schema({vol.Required(CONF_PASSWORD): str}),
+            description_placeholders={"username": self._user_input[CONF_USERNAME]},
+            errors=errors,
+        )
+
     def _create_entry(self) -> ConfigFlowResult:
         """Create the config entry from collected data."""
         persons_list = [{CONF_PERSON_ID: pid, CONF_PERSON_NAME: name} for pid, name in self._persons.items()]
