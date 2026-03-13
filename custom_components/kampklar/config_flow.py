@@ -9,6 +9,7 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.selector import SelectOptionDict, SelectSelector, SelectSelectorConfig
 
 from .api import KampKlarApiClient, KampKlarAuthError, KampKlarConnectionError
 from .const import CONF_PERSON_ID, CONF_PERSON_NAME, CONF_PERSONS, DOMAIN
@@ -32,7 +33,6 @@ class KampKlarConfigFlow(ConfigFlow, domain=DOMAIN):
         """Handle the login step."""
         errors: dict[str, str] = {}
         if user_input is not None:
-            _LOGGER.warning("KampKlar user_input received: keys=%s", list(user_input.keys()))
             session = async_get_clientsession(self.hass)
             client = KampKlarApiClient(session)
             try:
@@ -82,15 +82,15 @@ class KampKlarConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_persons(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle person selection step."""
         if user_input is not None:
-            selected: list[int] = user_input[CONF_PERSONS]
+            selected = {int(pid) for pid in user_input[CONF_PERSONS]}
             self._persons = {pid: name for pid, name in self._persons.items() if pid in selected}
             return self._create_entry()
 
+        options = [SelectOptionDict(value=str(pid), label=name) for pid, name in self._persons.items()]
         persons_schema = vol.Schema(
             {
-                vol.Required(CONF_PERSONS, default=list(self._persons.keys())): vol.All(
-                    vol.Coerce(list),
-                    [vol.In(self._persons)],
+                vol.Required(CONF_PERSONS, default=[str(pid) for pid in self._persons]): SelectSelector(
+                    SelectSelectorConfig(options=options, multiple=True)
                 ),
             }
         )

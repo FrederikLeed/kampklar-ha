@@ -158,10 +158,10 @@ async def test_user_flow_multi_person(hass: HomeAssistant, mock_user, mock_setup
         assert result["type"] is FlowResultType.FORM
         assert result["step_id"] == "persons"
 
-        # Select only the first person
+        # Select only the first person (SelectSelector returns string values)
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"],
-            {CONF_PERSONS: [1001]},
+            {CONF_PERSONS: ["1001"]},
         )
 
         assert result["type"] is FlowResultType.CREATE_ENTRY
