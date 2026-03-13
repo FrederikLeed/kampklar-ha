@@ -20,8 +20,8 @@ class User:
     def from_api(cls, data: dict) -> User:
         """Create from API response data dict."""
         return cls(
-            user_id=data["userId"],
-            person_id=data["personId"],
+            user_id=int(data["userId"]),
+            person_id=int(data["personId"]),
             first_name=data["firstName"],
             last_name=data["lastName"],
             email=data.get("email", ""),
@@ -46,8 +46,8 @@ class MatchInfo:
     def from_api(cls, data: dict) -> MatchInfo:
         """Create from API match sub-object."""
         return cls(
-            match_id=data["matchId"],
-            pool_id=data["poolId"],
+            match_id=int(data["matchId"]),
+            pool_id=int(data["poolId"]),
             home_team_name=data.get("homeTeamName", ""),
             away_team_name=data.get("awayTeamName", ""),
             stadium_name=data.get("stadiumName", ""),
@@ -88,23 +88,23 @@ class Activity:
         act = entry["activity"]
         match_data = act.get("match")
         return cls(
-            activity_id=act["id"],
+            activity_id=int(act["id"]),
             name=act["name"],
-            type_id=act["typeId"],
+            type_id=int(act["typeId"]),
             type_name=act.get("typeName", ""),
             start_time=datetime.fromisoformat(act["startTime"]),
             end_time=datetime.fromisoformat(act["endTime"]) if act.get("endTime") else None,
             meeting_time=datetime.fromisoformat(act["meetingTime"]) if act.get("meetingTime") else None,
             meeting_place=act.get("meetingPlace", ""),
-            team_id=act.get("teamId", 0),
+            team_id=int(act.get("teamId", 0)),
             team_name=act.get("teamName", ""),
             club_name=act.get("clubName", ""),
             club_logo_url=act.get("clubLogoUrl", ""),
-            signup_status_id=act.get("signupStatusId"),
+            signup_status_id=int(act["signupStatusId"]) if act.get("signupStatusId") is not None else None,
             signup_status_name=act.get("signupStatusName", ""),
-            subscribed=act.get("subscribed", 0),
+            subscribed=int(act.get("subscribed", 0)),
             subscribed_text=act.get("subscribedText", ""),
-            person_contact_id=act["personContactId"],
+            person_contact_id=int(act["personContactId"]),
             person_contact_name=act.get("personContactName", ""),
             match=MatchInfo.from_api(match_data) if match_data else None,
         )
