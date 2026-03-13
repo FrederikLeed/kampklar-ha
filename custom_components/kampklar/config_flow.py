@@ -9,20 +9,11 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.selector import TextSelector, TextSelectorConfig, TextSelectorType
 
 from .api import KampKlarApiClient, KampKlarAuthError, KampKlarConnectionError
 from .const import CONF_PERSON_ID, CONF_PERSON_NAME, CONF_PERSONS, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
-_LOGGER.warning("KampKlar config_flow module loaded (v0.1.2)")
-
-STEP_USER_DATA_SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_USERNAME): TextSelector(TextSelectorConfig(type=TextSelectorType.TEXT)),
-        vol.Required(CONF_PASSWORD): TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD)),
-    }
-)
 
 
 class KampKlarConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -39,10 +30,9 @@ class KampKlarConfigFlow(ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle the login step."""
-        _LOGGER.debug("async_step_user called, user_input=%s", "present" if user_input else "None")
-        _LOGGER.debug("Schema keys: %s", list(STEP_USER_DATA_SCHEMA.schema.keys()))
         errors: dict[str, str] = {}
         if user_input is not None:
+            _LOGGER.warning("KampKlar user_input received: keys=%s", list(user_input.keys()))
             session = async_get_clientsession(self.hass)
             client = KampKlarApiClient(session)
             try:
@@ -50,6 +40,9 @@ class KampKlarConfigFlow(ConfigFlow, domain=DOMAIN):
             except KampKlarAuthError:
                 errors["base"] = "invalid_auth"
             except KampKlarConnectionError:
+                errors["base"] = "cannot_connect"
+            except Exception:
+                _LOGGER.exception("KampKlar unexpected error during auth")
                 errors["base"] = "cannot_connect"
             else:
                 await self.async_set_unique_id(str(user.user_id))
@@ -59,7 +52,6 @@ class KampKlarConfigFlow(ConfigFlow, domain=DOMAIN):
                 self._user_id = user.user_id
                 self._person_id = user.person_id
 
-                # Discover persons (children) from activities
                 try:
                     activities = await client.get_person_activities(user.person_id)
                 except (KampKlarAuthError, KampKlarConnectionError):
@@ -72,18 +64,25 @@ class KampKlarConfigFlow(ConfigFlow, domain=DOMAIN):
                         self._persons[pid] = act.person_contact_name
 
                 if len(self._persons) <= 1:
-                    # Single person or no activities — skip selection
                     return self._create_entry()
 
                 return await self.async_step_persons()
 
-        return self.async_show_form(step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors)
+        return self.async_show_form(
+            step_id="user",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_USERNAME): str,
+                    vol.Required(CONF_PASSWORD): str,
+                }
+            ),
+            errors=errors,
+        )
 
     async def async_step_persons(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle person selection step."""
         if user_input is not None:
             selected: list[int] = user_input[CONF_PERSONS]
-            # Filter to selected persons
             self._persons = {pid: name for pid, name in self._persons.items() if pid in selected}
             return self._create_entry()
 
@@ -130,9 +129,7 @@ class KampKlarConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="reauth_confirm",
-            data_schema=vol.Schema(
-                {vol.Required(CONF_PASSWORD): TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD))}
-            ),
+            data_schema=vol.Schema({vol.Required(CONF_PASSWORD): str}),
             description_placeholders={"username": self._user_input[CONF_USERNAME]},
             errors=errors,
         )
@@ -140,7 +137,6 @@ class KampKlarConfigFlow(ConfigFlow, domain=DOMAIN):
     def _create_entry(self) -> ConfigFlowResult:
         """Create the config entry from collected data."""
         persons_list = [{CONF_PERSON_ID: pid, CONF_PERSON_NAME: name} for pid, name in self._persons.items()]
-        # If no persons discovered, use the parent person
         if not persons_list:
             persons_list = [{CONF_PERSON_ID: self._person_id, CONF_PERSON_NAME: ""}]
 
