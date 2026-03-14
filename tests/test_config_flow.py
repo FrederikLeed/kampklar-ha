@@ -200,9 +200,7 @@ async def test_persons_schema_serializable(hass: HomeAssistant, mock_user, mock_
         # This is what HA does internally — must not raise ValueError
         from homeassistant.helpers.config_validation import custom_serializer
 
-        serialized = voluptuous_serialize.convert(
-            result["data_schema"], custom_serializer=custom_serializer
-        )
+        serialized = voluptuous_serialize.convert(result["data_schema"], custom_serializer=custom_serializer)
         assert isinstance(serialized, list)
         assert len(serialized) > 0
 

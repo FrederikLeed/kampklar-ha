@@ -45,7 +45,9 @@ class KampKlarApiClient:
         data = await self._get(url, params=params)
         if not isinstance(data, list):
             return []
-        return [Activity.from_api(entry) for entry in data]
+        return [
+            Activity.from_api(entry) for entry in data if entry.get("activity", {}).get("personContactId") is not None
+        ]
 
     async def _get(self, url: str, **kwargs) -> dict | list:
         """Make a GET request."""
