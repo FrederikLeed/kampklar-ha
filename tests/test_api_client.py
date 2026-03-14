@@ -92,6 +92,43 @@ async def test_get_person_activities(mock_aiohttp, client):
     assert activities[1].match is None
 
 
+async def test_get_person_activities_skips_null_person_contact(mock_aiohttp, client):
+    """Test that activities with null personContactId are filtered out."""
+    activities_data = load_fixture("person_activities.json")
+    # Inject an entry with null personContactId (real API returns these)
+    null_entry = {
+        "activity": {
+            "id": 9999,
+            "name": "Ghost Activity",
+            "typeId": 1,
+            "typeName": "Træning",
+            "startTime": "2026-03-20T10:00:00",
+            "endTime": None,
+            "meetingTime": None,
+            "meetingPlace": "",
+            "teamId": 100,
+            "teamName": "U14",
+            "clubName": "Test",
+            "clubLogoUrl": "",
+            "signupStatusId": 0,
+            "signupStatusName": "Ikke svaret",
+            "subscribed": 0,
+            "subscribedText": "",
+            "personContactId": None,
+            "personContactName": None,
+            "match": None,
+        },
+        "activityDateTime": "2026-03-20T10:00:00",
+        "eType": 1,
+        "sortingIndex": 0,
+    }
+    mock_aiohttp.get(ACTIVITIES_URL, payload=[null_entry, *activities_data])
+
+    activities = await client.get_person_activities(300001)
+    assert len(activities) == 3  # null entry filtered out
+    assert all(a.person_contact_id is not None for a in activities)
+
+
 async def test_get_person_activities_empty(mock_aiohttp, client):
     """Test fetching activities when response is not a list."""
     mock_aiohttp.get(ACTIVITIES_URL, payload={})
