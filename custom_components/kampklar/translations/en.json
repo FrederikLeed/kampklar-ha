@@ -1,0 +1,113 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "KampKlar",
+        "description": "Log in with your DBU credentials",
+        "data": {
+          "username": "Username",
+          "password": "Password"
+        }
+      },
+      "persons": {
+        "title": "Select persons",
+        "description": "Choose which persons to track: {persons}",
+        "data": {
+          "persons": "Persons"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate",
+        "description": "The password for {username} has expired. Enter a new password.",
+        "data": {
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid username or password",
+      "cannot_connect": "Cannot connect to KampKlar"
+    },
+    "abort": {
+      "already_configured": "This account is already configured",
+      "reauth_successful": "Authentication updated"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options",
+        "description": "How often activities are refreshed, and when calendar events start.",
+        "data": {
+          "scan_interval": "Update interval (seconds)",
+          "start_at_meeting_time": "Start calendar events at the meeting time"
+        },
+        "data_description": {
+          "start_at_meeting_time": "When an activity has a meeting time, its calendar event starts then and the description shows the real start. Sensors keep the real start."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "next_activity": {
+        "name": "Next activity"
+      },
+      "next_match": {
+        "name": "Next match"
+      },
+      "pending_signups": {
+        "name": "Pending signups"
+      },
+      "next_udtagelse": {
+        "name": "Next call-up"
+      },
+      "live_match": {
+        "name": "Live match"
+      }
+    },
+    "calendar": {
+      "calendar": {
+        "name": "Calendar"
+      }
+    }
+  },
+  "services": {
+    "tilmeld": {
+      "name": "Sign up",
+      "description": "Sign a tracked child up for an activity. Pick the child; leave the activity empty to use their next activity.",
+      "fields": {
+        "device_id": {
+          "name": "Child",
+          "description": "The child's KampKlar device. You can pick several children."
+        },
+        "activity_id": {
+          "name": "Activity ID",
+          "description": "Optional. The activity to sign up for (activity_id on the child's sensors). Defaults to the child's next activity."
+        },
+        "person_id": {
+          "name": "Person ID",
+          "description": "Optional alternative to choosing the child as the target."
+        }
+      }
+    },
+    "afmeld": {
+      "name": "Sign off",
+      "description": "Sign a tracked child off an activity. Pick the child; leave the activity empty to use their next activity.",
+      "fields": {
+        "device_id": {
+          "name": "Child",
+          "description": "The child's KampKlar device. You can pick several children."
+        },
+        "activity_id": {
+          "name": "Activity ID",
+          "description": "Optional. The activity to sign off from. Defaults to the child's next activity."
+        },
+        "person_id": {
+          "name": "Person ID",
+          "description": "Optional alternative to choosing the child as the target."
+        }
+      }
+    }
+  }
+}

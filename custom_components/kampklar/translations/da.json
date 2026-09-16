@@ -1,0 +1,113 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "KampKlar",
+        "description": "Log ind med dine DBU-oplysninger",
+        "data": {
+          "username": "Brugernavn",
+          "password": "Adgangskode"
+        }
+      },
+      "persons": {
+        "title": "Vælg personer",
+        "description": "Vælg hvilke personer der skal følges: {persons}",
+        "data": {
+          "persons": "Personer"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Godkend igen",
+        "description": "Adgangskoden for {username} er udløbet. Indtast ny adgangskode.",
+        "data": {
+          "password": "Adgangskode"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Ugyldigt brugernavn eller adgangskode",
+      "cannot_connect": "Kan ikke oprette forbindelse til KampKlar"
+    },
+    "abort": {
+      "already_configured": "Denne konto er allerede konfigureret",
+      "reauth_successful": "Godkendelse opdateret"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Indstillinger",
+        "description": "Hvor ofte aktiviteter hentes, og hvornår kalenderbegivenheder starter.",
+        "data": {
+          "scan_interval": "Opdateringsinterval (sekunder)",
+          "start_at_meeting_time": "Start kalenderbegivenheder ved mødetid"
+        },
+        "data_description": {
+          "start_at_meeting_time": "Når en aktivitet har en mødetid, starter kalenderbegivenheden på det tidspunkt, og beskrivelsen viser det rigtige starttidspunkt. Sensorerne bruger stadig det rigtige starttidspunkt."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "next_activity": {
+        "name": "Næste aktivitet"
+      },
+      "next_match": {
+        "name": "Næste kamp"
+      },
+      "pending_signups": {
+        "name": "Afventende tilmeldinger"
+      },
+      "next_udtagelse": {
+        "name": "Næste udtagelse"
+      },
+      "live_match": {
+        "name": "Live kamp"
+      }
+    },
+    "calendar": {
+      "calendar": {
+        "name": "Kalender"
+      }
+    }
+  },
+  "services": {
+    "tilmeld": {
+      "name": "Tilmeld",
+      "description": "Tilmeld et fulgt barn til en aktivitet. Vælg barnet, og lad aktiviteten stå tom for at bruge barnets næste aktivitet.",
+      "fields": {
+        "device_id": {
+          "name": "Barn",
+          "description": "Barnets KampKlar-enhed. Du kan vælge flere børn."
+        },
+        "activity_id": {
+          "name": "Aktivitets-ID",
+          "description": "Valgfri. Aktiviteten der tilmeldes (activity_id på barnets sensorer). Standard er barnets næste aktivitet."
+        },
+        "person_id": {
+          "name": "Person-ID",
+          "description": "Valgfri. Alternativ til at vælge barnet som mål."
+        }
+      }
+    },
+    "afmeld": {
+      "name": "Afmeld",
+      "description": "Afmeld et fulgt barn fra en aktivitet. Vælg barnet, og lad aktiviteten stå tom for at bruge barnets næste aktivitet.",
+      "fields": {
+        "device_id": {
+          "name": "Barn",
+          "description": "Barnets KampKlar-enhed. Du kan vælge flere børn."
+        },
+        "activity_id": {
+          "name": "Aktivitets-ID",
+          "description": "Valgfri. Aktiviteten der afmeldes. Standard er barnets næste aktivitet."
+        },
+        "person_id": {
+          "name": "Person-ID",
+          "description": "Valgfri. Alternativ til at vælge barnet som mål."
+        }
+      }
+    }
+  }
+}

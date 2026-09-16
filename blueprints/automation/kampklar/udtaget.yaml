@@ -1,0 +1,59 @@
+blueprint:
+  name: KampKlar - notify when a child is called up (udtaget)
+  description: >
+    Sends a phone notification when a tracked child is selected (udtaget) for a new match or
+    activity. Uses the child's "Next call-up" sensor from the KampKlar integration. It only
+    fires when the call-up changes to a different activity, not on every restart.
+  domain: automation
+  source_url: https://github.com/FrederikLeed/kampklar-ha/blob/main/blueprints/automation/kampklar/udtaget.yaml
+  input:
+    call_up_sensor:
+      name: Next call-up sensor
+      description: The child's "Next call-up" (Næste udtagelse) sensor.
+      selector:
+        entity:
+          filter:
+            - integration: kampklar
+              domain: sensor
+    notify_device:
+      name: Phone to notify
+      description: A device running the Home Assistant Companion app.
+      selector:
+        device:
+          filter:
+            - integration: mobile_app
+    title:
+      name: Notification title
+      default: Udtaget til kamp
+      selector:
+        text: {}
+
+mode: queued
+max_exceeded: silent
+
+triggers:
+  - trigger: state
+    entity_id: !input call_up_sensor
+
+conditions:
+  - condition: template
+    value_template: >
+      {% set to = trigger.to_state %}
+      {% set fr = trigger.from_state %}
+      {{ to is not none
+         and to.state not in ['unknown', 'unavailable']
+         and to.attributes.get('activity_id') is not none
+         and fr is not none
+         and fr.state != 'unavailable'
+         and fr.attributes.get('activity_id') != to.attributes.get('activity_id') }}
+
+actions:
+  - device_id: !input notify_device
+    domain: mobile_app
+    type: notify
+    title: !input title
+    message: >
+      {% set a = trigger.to_state.attributes %}
+      {{ device_attr(device_id(trigger.entity_id), 'name') }}: {{ trigger.to_state.state | trim }}
+      {%- if a.get('start_time') %}, {{ as_timestamp(a.start_time) | timestamp_custom('%d/%m kl. %H:%M') }}{% endif %}
+      {%- if a.get('stadium') %}, {{ a.stadium }}{% endif %}

@@ -1,0 +1,15 @@
+{
+  "entity": {
+    "sensor": {
+      "next_activity": { "default": "mdi:calendar-clock" },
+      "next_match": { "default": "mdi:soccer" },
+      "pending_signups": { "default": "mdi:account-clock" },
+      "next_udtagelse": { "default": "mdi:star" },
+      "live_match": { "default": "mdi:soccer-field" }
+    }
+  },
+  "services": {
+    "tilmeld": { "service": "mdi:account-check" },
+    "afmeld": { "service": "mdi:account-remove" }
+  }
+}

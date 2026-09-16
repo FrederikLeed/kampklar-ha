@@ -1,0 +1,28 @@
+{
+  "id": 500001,
+  "round": 3,
+  "poolId": 400001,
+  "matchDate": "2026-03-14T00:00:00",
+  "matchTime": "11:00",
+  "homeTeamId": 900001,
+  "homeTeamName": "Testby BK",
+  "homeTeamLogoUrl": "https://file.dbu.dk/images/club/0/test.png",
+  "awayTeamId": 900002,
+  "awayTeamName": "FC Eksempel",
+  "awayTeamLogoUrl": "https://file.dbu.dk/images/club/0/eksempel.png",
+  "homeScore": null,
+  "awayScore": null,
+  "stadiumName": "Testby Stadion",
+  "stadium": {
+    "id": 700001,
+    "name": "Testby Stadion",
+    "address": "Prøvevej 1 ",
+    "zip": "1234",
+    "city": "Testby",
+    "latitude": 56.123456,
+    "longitude": 9.654321,
+    "isArtificialTurf": false,
+    "imageList": []
+  },
+  "fieldName": "Bane 2"
+}

@@ -1,0 +1,49 @@
+tilmeld:
+  fields:
+    device_id:
+      required: false
+      selector:
+        device:
+          multiple: true
+          filter:
+            integration: kampklar
+    activity_id:
+      required: false
+      example: 7000001
+      selector:
+        number:
+          mode: box
+          min: 0
+    person_id:
+      required: false
+      advanced: true
+      example: 9000000001
+      selector:
+        number:
+          mode: box
+          min: 0
+
+afmeld:
+  fields:
+    device_id:
+      required: false
+      selector:
+        device:
+          multiple: true
+          filter:
+            integration: kampklar
+    activity_id:
+      required: false
+      example: 7000001
+      selector:
+        number:
+          mode: box
+          min: 0
+    person_id:
+      required: false
+      advanced: true
+      example: 9000000001
+      selector:
+        number:
+          mode: box
+          min: 0
