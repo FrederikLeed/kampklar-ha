@@ -13,6 +13,12 @@ creates sensors (next activity, next match, next call-up, pending signups, live 
 
 ## Current state
 
+- v0.9.1 (2026-09-18): the calendar marker is the star alone (`⭐ Gug B - AaB`), not `⭐ Udtaget: ` or
+  `⭐ Tilmeldt: `. A relay that filters on `⭐ ` and strips the filter is then left with the activity's own
+  name instead of `Tilmeldt: Gug B - AaB`, and one filter still covers both modes. Whether the child was
+  picked or signed up stays in the description's `Status:` line and in the `is_udtaget` / `is_playing`
+  attributes, which is where automations read it. Anyone relaying with a `⭐ Udtaget: ` filter must widen it
+  to `⭐ ` before upgrading, or the relay stops matching and deletes what it wrote.
 - v0.9.0 (2026-09-18): a call-up is not the only way a child gets on a team. A DBU team activity runs in
   one of two modes and only `subscribedText` names which: "8 udtaget" means the coach picks a squad,
   "14 tilmeldte" means people sign up, and on a sign-up activity `signupStatusId` never reaches 4, so

@@ -15,6 +15,7 @@ from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.kampklar.api import Activity
+from custom_components.kampklar.calendar import _activity_to_event
 from custom_components.kampklar.const import (
     CONF_PERSON_ID,
     CONF_PERSON_NAME,
@@ -92,7 +93,7 @@ async def test_calendar_event_from_activities(hass: HomeAssistant, config_entry,
         await _setup(hass, config_entry, mock_activities)
         state = hass.states.get("calendar.test_ansen_calendar")
         assert state is not None
-        assert state.attributes.get("message") == f"⭐ Tilmeldt: {mock_activities[0].name}"
+        assert state.attributes.get("message") == f"⭐ {mock_activities[0].name}"
 
 
 async def test_calendar_signup_status_attribute(hass: HomeAssistant, config_entry, mock_activities):
@@ -116,7 +117,7 @@ async def test_calendar_get_events(hass: HomeAssistant, config_entry, mock_activ
     end = dt_util.as_local(mock_activities[-1].start_time + timedelta(days=1))
     events = await entity.async_get_events(hass, start, end)
     assert len(events) == len(mock_activities)
-    assert events[0].summary == f"⭐ Tilmeldt: {mock_activities[0].name}"
+    assert events[0].summary == f"⭐ {mock_activities[0].name}"
 
 
 async def test_calendar_empty(hass: HomeAssistant, config_entry):
@@ -249,7 +250,7 @@ async def test_staevne_event_uses_its_stadium(hass: HomeAssistant, config_entry,
 
     [event] = await _all_events(hass, [staevne])
 
-    assert event.summary == "⭐ Udtaget: Stævne: Testby Hallen"
+    assert event.summary == "⭐ Stævne: Testby Hallen"
     assert event.location == "Testby Hallen\nHallevej 1, 1234 Testby"
     lines = event.description.splitlines()
     assert "Type: DBU-Stævne" in lines
@@ -354,7 +355,7 @@ async def test_calendar_on_from_meeting_time_keeps_real_call_up_start(hass: Home
 @pytest.mark.parametrize(
     ("start_at_meeting", "expected"),
     [
-        (True, ("on", "⭐ Udtaget: Testby BK - FC Eksempel", "2026-03-14 09:30:00", "Udtaget", "Kamp")),
+        (True, ("on", "⭐ Testby BK - FC Eksempel", "2026-03-14 09:30:00", "Udtaget", "Kamp")),
         (False, ("off", "Træning", "2026-03-14 10:00:00", "Ikke svaret", "Træning")),
     ],
 )
@@ -425,9 +426,11 @@ async def test_no_meeting_place_line_without_venue(hass: HomeAssistant, mock_act
 
 
 async def test_calendar_marks_signed_up_match_on_a_signup_activity(hass: HomeAssistant, config_entry):
-    """A sign-up match the child is tilmeldt for is marked, with the word DBU actually uses.
+    """A sign-up match the child is tilmeldt for is marked with the star.
 
-    Both markers start with the star so one relay filter catches a child's matches either way.
+    The star alone, so one relay filter catches a child's matches whichever way the team picks them,
+    and a relay that strips the filter is left with the activity's own name. Tilmeldt or udtaget stays
+    in the description and the attributes.
     """
     fixture = load_fixture("person_activities.json")
     match_entry = copy.deepcopy(next(e for e in fixture if e["activity"].get("match")))
@@ -439,7 +442,9 @@ async def test_calendar_marks_signed_up_match_on_a_signup_activity(hass: HomeAss
     with patch("custom_components.kampklar.calendar.dt_util.now", return_value=now):
         await _setup(hass, config_entry, [act])
         state = hass.states.get("calendar.test_ansen_calendar")
-        assert state.attributes.get("message") == "⭐ Tilmeldt: Gug B - AaB"
+        assert state.attributes.get("message") == "⭐ Gug B - AaB"
+        # The star does not say which of the two it is; the description and the attributes do.
+        assert "Status: Tilmeldt" in state.attributes.get("description")
         assert state.attributes.get("is_playing") is True
         assert state.attributes.get("is_udtaget") is False
         assert state.attributes.get("next_playing") == "Gug B - AaB"
@@ -470,3 +475,26 @@ async def test_calendar_does_not_mark_training(hass: HomeAssistant, config_entry
         assert state.attributes.get("message") == "Træning"
         assert state.attributes.get("is_playing") is False
         assert state.attributes.get("next_playing") is None
+
+
+async def test_calendar_marker_is_the_same_for_both_modes(hass: HomeAssistant, config_entry):
+    """One filter must find a child's matches whichever way the team picks them.
+
+    A relay filtering on the star and stripping it is then left with the activity's own name, and the
+    description still says whether the child was picked or signed up.
+    """
+    fixture = load_fixture("person_activities.json")
+    base = next(e for e in fixture if e["activity"].get("match"))
+
+    def _event(**changes):
+        entry = copy.deepcopy(base)
+        entry["activity"].update(changes)
+        return _activity_to_event(Activity.from_api(entry))
+
+    picked = _event(name="AaB - Kristrup B", signupStatusId=4, signupStatusName="Udtaget", subscribedText="9 udtaget")
+    signed = _event(name="Gug B - AaB", signupStatusId=2, signupStatusName="Tilmeldt", subscribedText="14 tilmeldte")
+
+    assert picked.summary == "⭐ AaB - Kristrup B"
+    assert signed.summary == "⭐ Gug B - AaB"
+    assert "Status: Udtaget" in picked.description
+    assert "Status: Tilmeldt" in signed.description
