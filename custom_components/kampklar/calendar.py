@@ -64,19 +64,20 @@ def _activity_to_event(act: Activity, start_at_meeting: bool = False) -> Calenda
     """Convert an Activity to a CalendarEvent.
 
     When the person is expected at a match - udtaget where a coach picks the squad, tilmeldt where
-    people sign up - the event title is marked so it stands out in the calendar. An activity with a
-    known venue uses its address as the location. With start_at_meeting the event starts at the
-    meeting time (when known) and the description names the real start.
+    people sign up - the title is marked with a star so it stands out in the calendar and one filter
+    finds it either way. An activity with a known venue uses its address as the location. With
+    start_at_meeting the event starts at the meeting time (when known) and the description names the
+    real start.
     """
     start = _start_time(act, start_at_meeting)
     end = _end_time(act)
 
     summary = act.name
     if is_playing(act):
-        # Both markers start with the star, so one filter catches a child's matches whichever way the
-        # team picks them. The word stays true to DBU: nobody is "udtaget" on a sign-up activity.
-        word = "Udtaget" if is_udtaget(act.signup_status_id) else "Tilmeldt"
-        summary = f"⭐ {word}: {act.name}"
+        # The star alone, so one filter catches a child's matches whichever way the team picks them and
+        # a relay that strips the filter is left with the activity's own name. Which of the two it is
+        # stays in the description's "Status:" line and in the is_udtaget and is_playing attributes.
+        summary = f"⭐ {act.name}"
 
     venue = act.venue
     venue_address = venue.formatted_address if venue else ""

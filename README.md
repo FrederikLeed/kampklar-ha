@@ -23,7 +23,7 @@ One device per child, with these entities:
 | **Next call-up** (sensor) | Activity name | The next match or tournament the child is expected at, or unknown. That is *udtaget* where a coach picks the squad and *tilmeldt* where the team signs up instead (see [Two ways a team picks players](#two-ways-a-team-picks-players)). Same venue attributes as next match |
 | **Pending signups** (sensor) | Count | Attribute `activities`: the list still awaiting a response |
 | **Live match** (sensor) | "1 - 2" | During a match window: running minute, live result, event list (goals, cards), stadium |
-| **Calendar** | Next event | All activities as calendar events. A match the child is on shows as `⭐ Udtaget: ...` or `⭐ Tilmeldt: ...` so it stands out. Matches and DBU tournaments have the venue address as location |
+| **Calendar** | Next event | All activities as calendar events. A match the child is on shows as `⭐ ...` so it stands out. Matches and DBU tournaments have the venue address as location |
 
 ### Venue and meeting time
 
@@ -131,8 +131,10 @@ integration reads the mode off each activity and treats the strongest status tha
 on the team:
 
 - **Next call-up** names that activity, whichever mode it is.
-- **The calendar** marks its event `⭐ Udtaget: ` or `⭐ Tilmeldt: `. Both start with the star, so a
-  single filter (`⭐ `) catches a child's matches whichever way the team picks them.
+- **The calendar** marks its event with a star: `⭐ Gug B - AaB`. The same marker for both modes, so a
+  single filter (`⭐ `) catches a child's matches whichever way the team picks them, and a relay that
+  strips the filter is left with the activity's own name. Which of the two it was stays in the
+  description's `Status:` line and in the `is_udtaget` and `is_playing` attributes.
 - **Training never counts.** Everyone is signed up for training by default, so counting it would mark
   every week of the season.
 - An activity whose counter text says neither counts only udtaget, as before 0.9.0.
