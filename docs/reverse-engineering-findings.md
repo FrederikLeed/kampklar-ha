@@ -63,7 +63,9 @@ TypeId, TypeName, HideSelection, ConfirmSelection, StartTime, EndTime, Subscript
 MeetingPlace, StadiumText, Match, StadiumRound, SignupStatusId, SignupStatusName, IsConfirmed,
 IsOpenForSignUp, PersonImageUrl, PersonContactId, PersonContactName, Subscribed, SubscribedText, Tasks,
 RoleId, TeamAssignmentName`. `TypeId`: 1 Traening, 2 Kamp, 4 Staevne, 5 Traeningskamp, 7 DBU-Staevne.
-`SignupStatusId`: null unanswered, 1 frameldt, 2 tilmeldt, 3 til raadighed, 4 udtaget.
+`SignupStatusId`: null unanswered, 1 frameldt, 2 tilmeldt, 3 til raadighed, 4 udtaget. Which of those
+an activity can reach depends on its mode, which only `SubscribedText` names ("8 udtaget" = the coach
+picks a squad, "14 tilmeldte" = people sign up, and then 4 never appears). Per activity, not per team.
 
 ## Sign-up / cancel (the write path the integration is missing)
 

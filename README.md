@@ -20,10 +20,10 @@ One device per child, with these entities:
 |--------|-------|-------|
 | **Next activity** (sensor) | Activity name | Attributes: type, start/end time, meeting time and place, team, sign-up status, subscriber count, sign-up deadline, is-open-for-signup |
 | **Next match** (sensor) | "Home - Away" | Plus match id, stadium, field, row (tournament) and deadline. The venue as `stadium_address`, `latitude` and `longitude`, so a map card can show it |
-| **Next call-up** (sensor) | Activity name | The next match the child is *udtaget* (selected) for, or unknown. Same venue attributes as next match |
+| **Next call-up** (sensor) | Activity name | The next match or tournament the child is expected at, or unknown. That is *udtaget* where a coach picks the squad and *tilmeldt* where the team signs up instead (see [Two ways a team picks players](#two-ways-a-team-picks-players)). Same venue attributes as next match |
 | **Pending signups** (sensor) | Count | Attribute `activities`: the list still awaiting a response |
 | **Live match** (sensor) | "1 - 2" | During a match window: running minute, live result, event list (goals, cards), stadium |
-| **Calendar** | Next event | All activities as calendar events. A call-up shows as `Udtaget: ...` so it stands out. Matches and DBU tournaments have the venue address as location |
+| **Calendar** | Next event | All activities as calendar events. A match the child is on shows as `⭐ Udtaget: ...` or `⭐ Tilmeldt: ...` so it stands out. Matches and DBU tournaments have the venue address as location |
 
 ### Venue and meeting time
 
@@ -116,13 +116,40 @@ Entity names follow your Home Assistant language (Danish and English are provide
 A ready-made Lovelace view (activities, matches, call-ups, live score and a calendar per child) is in
 [docs/dashboard-example.md](docs/dashboard-example.md).
 
+## Two ways a team picks players
+
+A DBU team activity runs in one of two modes, and only the counter text names which:
+
+| Counter text | Mode | How far `signupStatusId` goes |
+|---|---|---|
+| `8 udtaget` | The coach picks a squad (*udtagelse*) | `4` Udtaget |
+| `14 tilmeldte` | People sign up (*tilmelding*) | `2` Tilmeldt — nobody is ever udtaget |
+
+The mode is per activity, not per team: the same team's practice matches often pick a squad while its
+league matches ask for sign-ups. So "the child is playing" cannot mean udtaget everywhere. The
+integration reads the mode off each activity and treats the strongest status that mode allows as being
+on the team:
+
+- **Next call-up** names that activity, whichever mode it is.
+- **The calendar** marks its event `⭐ Udtaget: ` or `⭐ Tilmeldt: `. Both start with the star, so a
+  single filter (`⭐ `) catches a child's matches whichever way the team picks them.
+- **Training never counts.** Everyone is signed up for training by default, so counting it would mark
+  every week of the season.
+- An activity whose counter text says neither counts only udtaget, as before 0.9.0.
+
+Every activity sensor also exposes `selection_mode` (`udtagelse`, `tilmelding` or absent) and
+`is_playing`, and the calendar exposes `is_playing`, `next_playing` and `next_playing_start` beside the
+unchanged `is_udtaget`, `next_udtaget` and `next_udtaget_start`.
+
+
 ## Blueprint: notify on call-up
 
 [![Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2FFrederikLeed%2Fkampklar-ha%2Fblob%2Fmain%2Fblueprints%2Fautomation%2Fkampklar%2Fudtaget.yaml)
 
 [`blueprints/automation/kampklar/udtaget.yaml`](blueprints/automation/kampklar/udtaget.yaml) sends a
-phone notification when a child is selected (udtaget) for a new match. Pick the child's "Next call-up"
-sensor and the phone; it fires once per new call-up, not on restarts.
+phone notification when a child is picked for a new match. Pick the child's "Next call-up"
+sensor and the phone; it fires once per new call-up, not on restarts. Since 0.9.0 that sensor also
+covers teams that sign up rather than pick a squad, so the blueprint fires for them too.
 
 ## Automations
 

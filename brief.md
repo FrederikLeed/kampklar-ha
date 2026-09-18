@@ -1,7 +1,7 @@
 ---
 project: kampklar-ha
 repo: https://github.com/FrederikLeed/kampklar-ha
-updated: 2026-09-16
+updated: 2026-09-18
 status: active
 ---
 
@@ -13,6 +13,23 @@ creates sensors (next activity, next match, next call-up, pending signups, live 
 
 ## Current state
 
+- v0.9.0 (2026-09-18): a call-up is not the only way a child gets on a team. A DBU team activity runs in
+  one of two modes and only `subscribedText` names which: "8 udtaget" means the coach picks a squad,
+  "14 tilmeldte" means people sign up, and on a sign-up activity `signupStatusId` never reaches 4, so
+  2 (Tilmeldt) is the strongest answer there is. The mode is per activity, not per team - the same team's
+  practice matches picked a squad ("0 udtaget") while its league matches asked for sign-ups. Before this,
+  a child on a sign-up team was never "udtaget": the call-up sensor stayed unknown, the calendar wrote no
+  marker, and Calendar Relay's `⭐ Udtaget: ` filter matched nothing, so none of his matches ever reached
+  the family calendar. Now `Activity.selection_mode` reads the mode off the counter text and
+  `const.is_playing` treats the strongest status that mode allows as being on the team. Next call-up names
+  that activity in either mode; the calendar marks it `⭐ Udtaget: ` or `⭐ Tilmeldt: `, both starting with
+  the star so one relay filter (`⭐ `) catches either, and the word stays true to what DBU says. Training
+  never counts - everyone is tilmeldt to training, which would mark every week. An activity whose counter
+  text says neither keeps the pre-0.9 rule (udtaget only). New attributes: `selection_mode` and
+  `is_playing` on the activity sensors, `is_playing`, `next_playing` and `next_playing_start` on the
+  calendar, beside the unchanged `is_udtaget` / `next_udtaget`. Verified against the live account and
+  cross-checked with `TeamActivity/GetListTeamActivityTeamMemberPerson`, which agreed with the person's
+  own feed on every activity.
 - v0.8.1 (2026-09-16): repo tidy-up for public use. The workspace notes under `.claude/` are no longer
   tracked (they are in `.gitignore`), CLAUDE.md keeps only the conventions, the pre-push checks and the
   no-personal-data rule, and the doc and test examples that had grown real venue names and addresses are
@@ -101,7 +118,10 @@ creates sensors (next activity, next match, next call-up, pending signups, live 
 
 - Activity `typeId`: 1 Træning, 2 Kamp, 4 Stævne, 5 Træningskamp, 7 DBU-Stævne.
 - `signupStatusId`: null when unanswered (with `isOpenForSignUp` telling whether answering is possible
-  yet), 2 Tilmeldt. The list is sorted by start time and covers about four weeks ahead.
+  yet), 2 Tilmeldt, 4 Udtaget. The list is sorted by start time and covers about four weeks ahead.
+- `subscribedText` is the only field naming how an activity picks players ("8 udtaget" vs "14 tilmeldte"),
+  and it decides whether 4 (Udtaget) can appear at all. Per activity, not per team. Seen live: DBU-Stævne,
+  Stævne and Træningskamp counted "udtaget"; Kamp and Træning counted "tilmeldte".
 - `personContactName` is empty and `personContactId` null for the person's own activities.
 - `Match/GetMatch` and `GetMatchExtended` return `stadium {name, address, zip, city, latitude, longitude}`
   and `fieldName` for every match (checked on 12 matches at 6 venues). Text can have trailing spaces, and
