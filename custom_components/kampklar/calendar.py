@@ -24,6 +24,7 @@ from .const import (
     CONF_START_AT_MEETING_TIME,
     DEFAULT_START_AT_MEETING_TIME,
     DOMAIN,
+    is_playing,
     is_udtaget,
 )
 from .coordinator import KampKlarCoordinator
@@ -62,17 +63,20 @@ def _map_link(venue: MatchVenue) -> str:
 def _activity_to_event(act: Activity, start_at_meeting: bool = False) -> CalendarEvent:
     """Convert an Activity to a CalendarEvent.
 
-    When the person is udtaget (selected/called up) for a match, the event title is
-    marked so it stands out in the calendar. An activity with a known venue uses its address
-    as the location. With start_at_meeting the event starts at the meeting time (when
-    known) and the description names the real start.
+    When the person is expected at a match - udtaget where a coach picks the squad, tilmeldt where
+    people sign up - the event title is marked so it stands out in the calendar. An activity with a
+    known venue uses its address as the location. With start_at_meeting the event starts at the
+    meeting time (when known) and the description names the real start.
     """
     start = _start_time(act, start_at_meeting)
     end = _end_time(act)
 
     summary = act.name
-    if is_udtaget(act.signup_status_id):
-        summary = f"⭐ Udtaget: {act.name}"
+    if is_playing(act):
+        # Both markers start with the star, so one filter catches a child's matches whichever way the
+        # team picks them. The word stays true to DBU: nobody is "udtaget" on a sign-up activity.
+        word = "Udtaget" if is_udtaget(act.signup_status_id) else "Tilmeldt"
+        summary = f"⭐ {word}: {act.name}"
 
     venue = act.venue
     venue_address = venue.formatted_address if venue else ""
@@ -187,11 +191,16 @@ class KampKlarCalendar(CoordinatorEntity[KampKlarCoordinator], CalendarEntity):
                 "activity_type": act.type_name,
                 "team": act.team_name,
                 "is_udtaget": is_udtaget(act.signup_status_id),
+                "is_playing": is_playing(act),
             }
         # Next activity the person is udtaget (called up) for, so an automation can notify.
         next_udtaget = next((a for a in upcoming if is_udtaget(a.signup_status_id)), None)
         attrs["next_udtaget"] = next_udtaget.name if next_udtaget else None
         attrs["next_udtaget_start"] = dt_util.as_local(next_udtaget.start_time).isoformat() if next_udtaget else None
+        # The same for a team that signs up instead of picking a squad, where udtaget never happens.
+        next_playing = next((a for a in upcoming if is_playing(a)), None)
+        attrs["next_playing"] = next_playing.name if next_playing else None
+        attrs["next_playing_start"] = dt_util.as_local(next_playing.start_time).isoformat() if next_playing else None
         return attrs
 
     async def async_get_events(

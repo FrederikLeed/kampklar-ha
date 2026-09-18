@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 from dataclasses import replace
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, patch
@@ -81,13 +82,17 @@ async def test_calendar_created(hass: HomeAssistant, config_entry, mock_activiti
 
 
 async def test_calendar_event_from_activities(hass: HomeAssistant, config_entry, mock_activities):
-    """Test that the calendar shows the next upcoming event."""
+    """Test that the calendar shows the next upcoming event.
+
+    The fixture's match is a sign-up activity the person is tilmeldt for, so its title carries the
+    marker (see test_calendar_marks_signed_up_match_on_a_signup_activity).
+    """
     now = dt_util.as_local(mock_activities[0].start_time - timedelta(hours=1))
     with patch("custom_components.kampklar.calendar.dt_util.now", return_value=now):
         await _setup(hass, config_entry, mock_activities)
         state = hass.states.get("calendar.test_ansen_calendar")
         assert state is not None
-        assert state.attributes.get("message") == mock_activities[0].name
+        assert state.attributes.get("message") == f"⭐ Tilmeldt: {mock_activities[0].name}"
 
 
 async def test_calendar_signup_status_attribute(hass: HomeAssistant, config_entry, mock_activities):
@@ -111,7 +116,7 @@ async def test_calendar_get_events(hass: HomeAssistant, config_entry, mock_activ
     end = dt_util.as_local(mock_activities[-1].start_time + timedelta(days=1))
     events = await entity.async_get_events(hass, start, end)
     assert len(events) == len(mock_activities)
-    assert events[0].summary == mock_activities[0].name
+    assert events[0].summary == f"⭐ Tilmeldt: {mock_activities[0].name}"
 
 
 async def test_calendar_empty(hass: HomeAssistant, config_entry):
@@ -417,3 +422,51 @@ async def test_no_meeting_place_line_without_venue(hass: HomeAssistant, mock_act
 
     assert event.location == "Sportsvej 1, 1234 Testby"
     assert _meeting_place_lines(event) == []
+
+
+async def test_calendar_marks_signed_up_match_on_a_signup_activity(hass: HomeAssistant, config_entry):
+    """A sign-up match the child is tilmeldt for is marked, with the word DBU actually uses.
+
+    Both markers start with the star so one relay filter catches a child's matches either way.
+    """
+    fixture = load_fixture("person_activities.json")
+    match_entry = copy.deepcopy(next(e for e in fixture if e["activity"].get("match")))
+    match_entry["activity"].update(
+        {"name": "Gug B - AaB", "signupStatusId": 2, "signupStatusName": "Tilmeldt", "subscribedText": "14 tilmeldte"}
+    )
+    act = Activity.from_api(match_entry)
+    now = dt_util.as_local(act.start_time - timedelta(hours=1))
+    with patch("custom_components.kampklar.calendar.dt_util.now", return_value=now):
+        await _setup(hass, config_entry, [act])
+        state = hass.states.get("calendar.test_ansen_calendar")
+        assert state.attributes.get("message") == "⭐ Tilmeldt: Gug B - AaB"
+        assert state.attributes.get("is_playing") is True
+        assert state.attributes.get("is_udtaget") is False
+        assert state.attributes.get("next_playing") == "Gug B - AaB"
+        # The udtaget attributes stay honest: nobody is udtaget on a sign-up activity.
+        assert state.attributes.get("next_udtaget") is None
+
+
+async def test_calendar_does_not_mark_training(hass: HomeAssistant, config_entry):
+    """Training is tilmeldt by default, so it must not be marked or every week would be."""
+    fixture = load_fixture("person_activities.json")
+    entry = copy.deepcopy(fixture[0])
+    entry["activity"].update(
+        {
+            "name": "Træning",
+            "typeId": 1,
+            "typeName": "Træning",
+            "match": None,
+            "signupStatusId": 2,
+            "signupStatusName": "Tilmeldt",
+            "subscribedText": "44 tilmeldte",
+        }
+    )
+    act = Activity.from_api(entry)
+    now = dt_util.as_local(act.start_time - timedelta(hours=1))
+    with patch("custom_components.kampklar.calendar.dt_util.now", return_value=now):
+        await _setup(hass, config_entry, [act])
+        state = hass.states.get("calendar.test_ansen_calendar")
+        assert state.attributes.get("message") == "Træning"
+        assert state.attributes.get("is_playing") is False
+        assert state.attributes.get("next_playing") is None

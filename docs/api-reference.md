@@ -163,6 +163,14 @@ Logout user.
 | 5 | Træningskamp | Practice match |
 | 7 | DBU-Stævne | Tournament round run by DBU |
 
+**How far signupStatusId can go depends on the activity.** A team activity either picks a squad or asks
+for sign-ups, and only `subscribedText` names which: "8 udtaget" is a squad, "14 tilmeldte" is a sign-up.
+On a sign-up activity nobody is ever 4 (Udtaget) - 2 (Tilmeldt) is the strongest answer. The mode is per
+activity, not per team: verified live 2026-09-18 on one team whose Traeningskamp activities counted
+"0 udtaget" while its Kamp activities counted "11 tilmeldte". Confirmed against
+`TeamActivity/GetListTeamActivityTeamMemberPerson` for the same activities, which agrees with the
+person's own feed.
+
 **signupStatusId values:**
 | id | name | Description |
 |----|------|-------------|

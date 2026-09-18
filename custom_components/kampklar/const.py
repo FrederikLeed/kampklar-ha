@@ -1,6 +1,10 @@
 """Constants for the KampKlar integration."""
 
 from datetime import timedelta
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .api import Activity
 
 DOMAIN = "kampklar"
 
@@ -68,3 +72,21 @@ ATTR_ACTIVITY_ID = "activity_id"
 def is_udtaget(status_id: int | None) -> bool:
     """Return True when the sign-up status means the person is selected for a match."""
     return status_id in UDTAGET_STATUS_IDS
+
+
+def is_playing(activity: "Activity") -> bool:
+    """Return True when the child is expected to turn up for this match or tournament.
+
+    Which status means that depends on how the activity picks its players
+    (see Activity.selection_mode): where a coach picks the squad it is udtaget, and where people sign
+    up nobody is ever udtaget, so tilmeldt is the strongest answer DBU can give. An activity whose mode
+    DBU does not name counts only udtaget, as before.
+
+    Training never counts. Everyone is signed up for training by default, so counting it would mark
+    every week of the season.
+    """
+    if activity.type_id == ACTIVITY_TYPE_TRAINING:
+        return False
+    if is_udtaget(activity.signup_status_id):
+        return True
+    return activity.selection_mode is False and activity.signup_status_id == SIGNUP_SIGNED_UP

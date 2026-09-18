@@ -183,9 +183,15 @@ async def test_next_udtagelse_sensor(hass: HomeAssistant, config_entry):
 
 
 async def test_next_udtagelse_none(hass: HomeAssistant, config_entry):
-    """The sensor is unknown when the person is not selected for anything."""
+    """The sensor is unknown when the person is not on anything.
+
+    An unanswered match counts for neither mode, and training never counts even when tilmeldt.
+    """
     base = load_fixture("person_activities.json")[0]
-    data = [_entry(base, id=1, signupStatusId=2, signupStatusName="Tilmeldt")]
+    data = [
+        _entry(base, id=1, signupStatusId=None, signupStatusName=None),
+        _entry(base, id=2, typeId=1, typeName="Træning", match=None, signupStatusId=2, signupStatusName="Tilmeldt"),
+    ]
     await _setup_with(hass, config_entry, [Activity.from_api(e) for e in data])
     assert hass.states.get("sensor.test_ansen_next_call_up").state == "unknown"
 
@@ -330,3 +336,76 @@ async def test_staevne_call_up_has_its_stadium_and_address(hass: HomeAssistant, 
     assert attrs["stadium_address"] == "Testby Hallen, Hallevej 1, 1234 Testby"
     assert (attrs["latitude"], attrs["longitude"]) == (56.123456, 9.654321)
     assert "match_id" not in attrs
+
+
+@pytest.mark.parametrize(
+    ("subscribed_text", "expected"),
+    [
+        ("14 tilmeldte", False),
+        ("8 udtaget", True),
+        ("0 udtaget", True),
+        ("0 tilmeldte", False),
+        ("", None),
+        ("13 Tilmeldte", False),
+    ],
+)
+def test_selection_mode_read_from_the_counter(subscribed_text, expected):
+    """The counter text is the only place DBU names how an activity picks its players."""
+    base = load_fixture("person_activities.json")[0]
+    act = Activity.from_api(_entry(base, id=1, subscribedText=subscribed_text))
+    assert act.selection_mode is expected
+
+
+async def test_next_udtagelse_on_a_signup_match(hass: HomeAssistant, config_entry):
+    """A team that signs up never reaches udtaget, so tilmeldt is what the sensor reports.
+
+    This is the live shape of Jonas' U15 league match: "14 tilmeldte", signupStatusId 2.
+    """
+    base = load_fixture("person_activities.json")[0]
+    data = [
+        _entry(base, id=1, name="Ikke svaret", signupStatusId=None, signupStatusName=None),
+        _entry(
+            base, id=2, name="Gug B - AaB", signupStatusId=2, signupStatusName="Tilmeldt", subscribedText="14 tilmeldte"
+        ),
+    ]
+    await _setup_with(hass, config_entry, [Activity.from_api(e) for e in data])
+    state = hass.states.get("sensor.test_ansen_next_call_up")
+    assert state.state == "Gug B - AaB"
+    assert state.attributes["selection_mode"] == "tilmelding"
+    assert state.attributes["is_playing"] is True
+
+
+async def test_next_udtagelse_prefers_udtaget_on_a_selection_activity(hass: HomeAssistant, config_entry):
+    """Where a coach picks the squad, tilmeldt is not enough - only udtaget counts.
+
+    This is the live shape of Alba's DBU-stævne: "8 udtaget", signupStatusId 4.
+    """
+    base = load_fixture("person_activities.json")[0]
+    data = [
+        _entry(
+            base, id=1, name="Kun tilmeldt", signupStatusId=2, signupStatusName="Tilmeldt", subscribedText="9 udtaget"
+        ),
+        _entry(base, id=2, name="Stævne", signupStatusId=4, signupStatusName="Udtaget", subscribedText="8 udtaget"),
+    ]
+    await _setup_with(hass, config_entry, [Activity.from_api(e) for e in data])
+    state = hass.states.get("sensor.test_ansen_next_call_up")
+    assert state.state == "Stævne"
+    assert state.attributes["selection_mode"] == "udtagelse"
+
+
+async def test_training_never_counts_as_playing(hass: HomeAssistant, config_entry):
+    """Everyone is signed up for training, so counting it would mark every week."""
+    base = load_fixture("person_activities.json")[0]
+    data = [
+        _entry(base, id=1, typeId=1, typeName="Træning", match=None, signupStatusId=2, signupStatusName="Tilmeldt"),
+    ]
+    await _setup_with(hass, config_entry, [Activity.from_api(e) for e in data])
+    assert hass.states.get("sensor.test_ansen_next_call_up").state == "unknown"
+
+
+async def test_unknown_mode_counts_only_udtaget(hass: HomeAssistant, config_entry):
+    """With no counter text the mode is unknown, so the pre-0.9 rule applies: udtaget only."""
+    base = load_fixture("person_activities.json")[0]
+    data = [_entry(base, id=1, signupStatusId=2, signupStatusName="Tilmeldt", subscribedText="")]
+    await _setup_with(hass, config_entry, [Activity.from_api(e) for e in data])
+    assert hass.states.get("sensor.test_ansen_next_call_up").state == "unknown"

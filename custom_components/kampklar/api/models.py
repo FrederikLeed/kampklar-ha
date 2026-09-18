@@ -320,6 +320,23 @@ class Activity:
         """Return the meeting time to show, repaired onto the activity's date (see repair_meeting_time)."""
         return repair_meeting_time(self.meeting_time, self.start_time)
 
+    @property
+    def selection_mode(self) -> bool | None:
+        """Return whether a coach picks the squad here, or None when DBU does not say.
+
+        A team activity runs in one of two modes, and only the counter text names it: a squad the coach
+        picks counts "8 udtaget", an activity people sign up for counts "14 tilmeldte". The mode decides
+        how far signupStatusId can go: on a sign-up activity nobody is ever 4 (Udtaget), 2 (Tilmeldt) is
+        the strongest answer there is. It is per activity, not per team - the same team's practice
+        matches pick a squad while its league matches ask for sign-ups.
+        """
+        text = self.subscribed_text.casefold()
+        if "udtaget" in text:
+            return True
+        if "tilmeld" in text:
+            return False
+        return None
+
     @classmethod
     def from_api(cls, entry: dict) -> Activity:
         """Create from a PersonActivity/GetList array entry."""

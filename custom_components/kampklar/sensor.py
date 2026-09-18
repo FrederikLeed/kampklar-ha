@@ -21,7 +21,7 @@ from .const import (
     CONF_PERSONS,
     DOMAIN,
     SIGNUP_NOT_RESPONDED,
-    is_udtaget,
+    is_playing,
 )
 from .coordinator import KampKlarCoordinator
 
@@ -42,11 +42,22 @@ def _next_match(activities: list[Activity]) -> Activity | None:
 
 
 def _next_udtaget(activities: list[Activity]) -> Activity | None:
-    """Return the next activity the person is udtaget (selected/called up) for."""
+    """Return the next match or tournament the person is expected at.
+
+    That is udtaget where a coach picks the squad, and tilmeldt where people sign up instead, since
+    such an activity never reaches udtaget (see const.is_playing).
+    """
     for act in activities:
-        if is_udtaget(act.signup_status_id):
+        if is_playing(act):
             return act
     return None
+
+
+def _mode_name(act: Activity) -> str | None:
+    """Name how an activity picks its players, for the attribute: udtagelse, tilmelding or unknown."""
+    if act.selection_mode is None:
+        return None
+    return "udtagelse" if act.selection_mode else "tilmelding"
 
 
 def _pending_signups(activities: list[Activity]) -> list[Activity]:
@@ -81,6 +92,10 @@ def _activity_attributes(act: Activity | None, *, with_venue: bool = False) -> d
         "subscribed": act.subscribed,
         "person": act.person_contact_name,
         "is_open_for_signup": act.is_open_for_signup,
+        # How this activity picks players, and whether the child is on it, so a dashboard or an
+        # automation can tell a match the child plays from one nobody has answered.
+        "selection_mode": _mode_name(act),
+        "is_playing": is_playing(act),
     }
     if act.end_time:
         attrs["end_time"] = act.end_time.isoformat()
